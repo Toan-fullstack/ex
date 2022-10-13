@@ -1,7 +1,9 @@
 import { unwrapResult } from '@reduxjs/toolkit'
+import DOMPurify from 'dompurify'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { useParams } from 'react-router'
+import { toast } from 'react-toastify'
 import ProductQuantityController from 'src/components/ProductQuantityController/ProductQuantityController'
 import ProductRating from 'src/components/ProductRating/ProductRating'
 import {
@@ -10,7 +12,7 @@ import {
   getIdFromNameId,
   rateSale
 } from 'src/utils/helper'
-import { getProductDetail } from './productDetail.slice'
+import { addToCart, getProductDetail } from './productDetail.slice'
 import * as S from './productDetail.style'
 
 const ProductDetail = () => {
@@ -42,7 +44,6 @@ const ProductDetail = () => {
         setProduct(res.data)
       })
   }, [idProduct, dispatch])
-  console.log(product)
 
   const chooseCurrent = image => setCurrentImage(image)
 
@@ -64,6 +65,21 @@ const ProductDetail = () => {
     }
   }
   const handleChangeQuantity = value => setQuantity(value)
+
+  const handleAddToCart = () => {
+    const body = {
+      product_id: product._id,
+      buy_count: quantity
+    }
+    dispatch(addToCart(body))
+      .then(unwrapResult)
+      .then(res => {
+        toast.success(res.message, {
+          position: 'top-center',
+          autoClose: 4000
+        })
+      })
+  }
 
   return (
     <div>
@@ -144,7 +160,7 @@ const ProductDetail = () => {
                   {product.quantity} sản phẩm có sẵn
                 </S.ProductBuyQuantityQuantity>
               </S.ProductBuyQuantity>
-              <S.ProductButtons>
+              <S.ProductButtons onClick={handleAddToCart}>
                 <svg
                   enableBackground="new 0 0 15 15"
                   viewBox="0 0 15 15"
@@ -190,7 +206,11 @@ const ProductDetail = () => {
           </S.ProductBriefing>
           <S.ProductContent>
             <S.ProductContentHeading>MÔ TẢ SẢN PHẨM</S.ProductContentHeading>
-            <S.ProductContentDetail />
+            <S.ProductContentDetail
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(product.description)
+              }}
+            />
           </S.ProductContent>
         </div>
       )}
